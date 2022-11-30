@@ -1,4 +1,4 @@
-# 4scii - Draw ASCII art using the mouse in the terminal
+# 4scii - ASCII art with the mouse in the terminal
 
 Tested on OpenBSD and Linux
 
