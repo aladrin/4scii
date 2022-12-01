@@ -18,74 +18,6 @@
 #include <unistd.h>
 #include <string.h>
 
-void domenubar (int input) {
-  WINDOW * menubar = newwin(1, 16, 0, 0);
-  wattron(menubar, A_STANDOUT);
-  mvwprintw(menubar, 0, 0, " ");
-  mvwprintw(menubar, 0, 1, "File");
-  mvwprintw(menubar, 0, 5, " ");
-  mvwprintw(menubar, 0, 6, "Edit");
-  mvwprintw(menubar, 0, 10, " ");
-  mvwprintw(menubar, 0, 11, "Help");
-  mvwprintw(menubar, 0, 15, " ");
-  keypad(menubar, true);
-  do {
-    input = wgetch(menubar);
-    if(input == KEY_MOUSE) {
-      getmouse(&mouseinput);
-      y = mouseinput.y;
-      x = mouseinput.x;
-      if((x >= 0) && (x <= 4)) {
-        wattron(menubar, A_STANDOUT);
-        mvwprintw(menubar, 0, 0, " ");
-        mvwprintw(menubar, 0, 1, "File");
-        mvwprintw(menubar, 0, 5, " ");
-        mvwprintw(menubar, 0, 6, "Edit");
-        mvwprintw(menubar, 0, 10, " ");
-        mvwprintw(menubar, 0, 11, "Help");
-        mvwprintw(menubar, 0, 15, " ");
-        wattroff(menubar, A_STANDOUT);
-        mvwprintw(menubar, 0, 0, " ");
-        mvwprintw(menubar, 0, 1, "File");
-        mvwprintw(menubar, 0, 5, " ");
-        wattron(menubar, A_STANDOUT);
-      } else if((x >= 6) && (x <= 9)) {
-        wattron(menubar, A_STANDOUT);
-        mvwprintw(menubar, 0, 0, " ");
-        mvwprintw(menubar, 0, 1, "File");
-        mvwprintw(menubar, 0, 5, " ");
-        mvwprintw(menubar, 0, 6, "Edit");
-        mvwprintw(menubar, 0, 10, " ");
-        mvwprintw(menubar, 0, 11, "Help");
-        mvwprintw(menubar, 0, 15, " ");
-        wattroff(menubar, A_STANDOUT); 
-        mvwprintw(menubar, 0, 5, " ");
-        mvwprintw(menubar, 0, 6, "Edit");
-        mvwprintw(menubar, 0, 10, " ");
-        wattron(menubar, A_STANDOUT);
-      } else if((x >= 11) && (x <= 15)) {
-        wattron(menubar, A_STANDOUT);
-        mvwprintw(menubar, 0, 0, " ");
-        mvwprintw(menubar, 0, 1, "File");
-        mvwprintw(menubar, 0, 5, " ");
-        mvwprintw(menubar, 0, 6, "Edit");
-        mvwprintw(menubar, 0, 10, " ");
-        mvwprintw(menubar, 0, 11, "Help");
-        mvwprintw(menubar, 0, 15, " ");
-        wattroff(menubar, A_STANDOUT);
-        mvwprintw(menubar, 0, 10, " ");
-        mvwprintw(menubar, 0, 11, "Help");
-        mvwprintw(menubar, 0, 15, " ");
-        wattron(menubar, A_STANDOUT);
-      } 
-    }
-  } while(input != 27);
-  wclear(menubar);
-  wrefresh(menubar);
-  delwin(menubar);
-  refresh();
-}
-
 int main (int argc, char *argv[]) {
   int input, x, y;
   char character = '*';
@@ -134,8 +66,6 @@ int main (int argc, char *argv[]) {
       refresh();
     } else if(isprint(input)) {
       character = input;
-    } else if(input == 27) {
-      domenubar(input); 
     } else if(input == CTRL('Z')) {
     } else if(input == CTRL('Y')) {
     } else if(input == CTRL('S')) {
@@ -148,7 +78,7 @@ int main (int argc, char *argv[]) {
         }
       }
       FILE *ofp;
-      ofp = fopen("test.file", "w");
+      ofp = fopen("4scii.txt", "w");
       for(y = ymin; y <= ymax; y++) {
         for(x = xmax; x >= xmin; x--) {
           if(isprint(canvas[y][x])) {
