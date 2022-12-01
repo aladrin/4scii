@@ -1,6 +1,11 @@
 ![4scii](file.png)
 # 4scii - ASCII art with the mouse in the terminal
 
+### Grab the source
+```
+git clone https://github.com/aladrin/4scii.git
+cd 4scii
+```
 ### OpenBSD
 ```
 cc -O2 -pipe -c 4scii.c
