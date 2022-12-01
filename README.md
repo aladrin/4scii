@@ -15,6 +15,7 @@ gcc -o 4scii 4scii.o -lncurses
 ```
 ### Usage
 ```
+./4scii
 Press any key to change brush
 Ctrl-s save 4scii.txt and quit
 Ctrl-q just quit
