@@ -3,18 +3,18 @@
 
 Tested on OpenBSD and Linux
 
-# OpenBSD:
+## OpenBSD:
 ```
  cc -O2 -pipe -c 4scii.c
  cc -o 4scii 4scii.o -lcurses
 ```
 
-# Linux:
+## Linux:
 ```
  gcc -O2 -pipe -c 4scii.c
  gcc -o 4scii 4scii.o -lncurses
 ```
-# Usage:
+## Usage:
 ```
 Press any key to change brush
 Save: ctrl-s
