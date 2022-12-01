@@ -7,7 +7,7 @@ cc -O2 -pipe -c 4scii.c
 cc -o 4scii 4scii.o -lcurses
 ```
 
-### Linux
+### Ubuntu
 ```
 sudo apt install -y ncurses-dev
 gcc -O2 -pipe -c 4scii.c
