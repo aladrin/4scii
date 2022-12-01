@@ -1,3 +1,4 @@
+![4scii](file.png)
 # 4scii - ASCII art with the mouse in the terminal
 
 Tested on OpenBSD and Linux
