@@ -10,13 +10,15 @@
 * **Frame-by-Frame Animator:** Create blank frames, duplicate existing frames for incremental animation, delete frames, adjust per-frame millisecond delays, toggle dim blue onion-skinning of the previous frame, and preview live animation playback in the terminal.
 * **Colored `.txt` I/O (Save & Save As):** Save and load cropped static ASCII art files with full ANSI SGR color and bold preservation (compatible with `cat`, `less -R`, and plain uncolored `.txt` files). Supports quick `Save` to the active file as well as `Save As`.
 * **Asciinema `.cast` v2 Import & Export:** Load and edit existing `.cast` animations or export multi-frame color animations with exact frame timings playable via `asciinema play`.
+* **Readline-Style Filename Prompts:** In-place cursor editing, kill/yank ring, session history, and filesystem `Tab` completion for all file prompts.
 
 ## Grab the Source
 
 ```sh
-git clone https://github.com/aladrin/4scii.git
+git clone [https://github.com/aladrin/4scii.git](https://github.com/aladrin/4scii.git)
 cd 4scii
 ```
+---
 
 ## Dependencies & Build
 
@@ -35,6 +37,21 @@ cd 4scii
   ```sh
   doas pkg_add gmake
   ```
+* **macOS:**
+  Install the Xcode Command Line Tools (provides `clang`, `make`, and system `ncurses` headers and libraries):
+  ```sh
+  xcode-select --install
+  ```
+* **Windows (WSL / WSL2):**
+  1. If WSL is not yet installed, open PowerShell or Command Prompt as Administrator and run:
+     ```powershell
+     wsl --install
+     ```
+  2. Inside your WSL terminal (Ubuntu/Debian default), install the compiler toolchain and `ncurses` headers:
+     ```sh
+     sudo apt-get update && sudo apt-get install -y build-essential libncurses-dev
+     ```
+  3. Run `4scii` inside **Windows Terminal** (or another `xterm`-compatible terminal emulator) so mouse button-motion tracking (`xterm-1002`) works when clicking and dragging across the canvas.
 
 ### Configure and Compile
 
@@ -93,6 +110,25 @@ Start with a blank canvas, or pass an existing `.txt` static file or `.cast` ani
 | **Ctrl+R** | Prompt for filename and load an asciinema `.cast` animation |
 | **Ctrl+E** | Prompt for filename and export full animation as asciinema `.cast` |
 | **Ctrl+Q** | Quit `4scii` |
+
+### Filename Prompt Controls (Readline-Style)
+
+When entering a filename for `Save`, `Save As`, `Load`, or `Export .cast`:
+
+| Key | Action |
+| :--- | :--- |
+| **Tab** | Filesystem path and filename completion (displays candidate list on multiple matches) |
+| **Left / Right (`Ctrl+B` / `Ctrl+F`)** | Move cursor left / right within the filename |
+| **Home / End (`Ctrl+A` / `Ctrl+E`)** | Jump to start / end of the line |
+| **Up / Down (`Ctrl+P` / `Ctrl+N`)** | Cycle through previously entered filenames in session history |
+| **Backspace / `Ctrl+H`** | Delete character before the cursor |
+| **Delete / `Ctrl+D`** | Delete character under the cursor |
+| **`Ctrl+K` / `Ctrl+U`** | Kill from cursor to end / start of line (saved to yank buffer) |
+| **`Ctrl+W`** | Kill previous word or path segment (saved to yank buffer) |
+| **`Ctrl+Y`** | Yank (paste) last killed text at the cursor |
+| **`Ctrl+T`** | Transpose characters around the cursor |
+| **Enter** | Confirm filename |
+| **ESC / `Ctrl+G`** | Cancel prompt |
 
 ### Menu Controls (`F2` / `Tab` / `Right-Click`)
 
