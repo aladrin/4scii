@@ -14,7 +14,7 @@
 ## Grab the Source
 
 ```sh
-git clone [https://github.com/aladrin/4scii.git](https://github.com/aladrin/4scii.git)
+git clone https://github.com/aladrin/4scii.git
 cd 4scii
 ```
 
