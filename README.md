@@ -1,27 +1,117 @@
 ![4scii](file.png)
-# 4scii - ASCII art with the mouse in the terminal
+# 4scii - Terminal ASCII Art & Frame-by-Frame Animator
 
-### Grab the source
-```
-git clone https://github.com/aladrin/4scii.git
+`4scii` is a mouse-driven terminal ASCII art paint program and frame-by-frame animation editor built with `curses`/`ncurses` in C. It supports full 8x8 ANSI color pairs, bold attributes, per-frame Undo/Redo stacks, onion-skinning, static `.txt` file load/save, and direct export to **asciinema v2 (`.cast`)** animation files.
+
+## Features
+
+* **Mouse-Driven Painting & Erasing:** Click and drag to paint characters with active foreground/background colors, or toggle erase mode.
+* **Interactive Control & Color Menu:** Popup `ncurses` menu accessible via mouse or keyboard to select colors, brush presets, frame timing, onion-skinning, and file operations.
+* **Frame-by-Frame Animator:** Create blank frames, duplicate existing frames for incremental animation, delete frames, adjust per-frame millisecond delays, toggle dim blue onion-skinning of the previous frame, and preview live animation playback in the terminal.
+* **Static `.txt` I/O:** Load and save cropped static ASCII art files (automatically enforcing the `.txt` extension).
+* **Asciinema `.cast` v2 Export:** Serialize multi-frame color animations with exact frame timings to `.cast` files playable via `asciinema play`.
+
+## Grab the Source
+
+```sh
+git clone [https://github.com/aladrin/4scii.git](https://github.com/aladrin/4scii.git)
 cd 4scii
 ```
-### OpenBSD
-```
-cc -O2 -pipe -c 4scii.c
-cc -o 4scii 4scii.o -lcurses
+
+## Dependencies & Build
+
+### Prerequisites
+
+* **Debian / Ubuntu:**
+  ```sh
+  sudo apt-get install build-essential libncurses-dev
+  ```
+* **Rocky Linux / RHEL / Fedora:**
+  ```sh
+  sudo dnf install gcc make ncurses-devel
+  ```
+* **OpenBSD:**
+  Ensure the base `comp` set is installed (`curses` is in base) and install GNU Make if using `gmake`:
+  ```sh
+  doas pkg_add gmake
+  ```
+
+### Configure and Compile
+
+Run `./configure` to detect your compiler and `curses`/`ncurses` headers and libraries, then build with `make` (or `gmake` on OpenBSD):
+
+```sh
+./configure
+make
 ```
 
-### Ubuntu
+To clean build artifacts:
+
+```sh
+make clean      # Remove binary and object files
+make distclean  # Remove binary, object files, and config.mk
 ```
-sudo apt install -y ncurses-dev
-gcc -O2 -pipe -c 4scii.c
-gcc -o 4scii 4scii.o -lncurses
-```
-### Usage
-```
+
+## Usage
+
+Start with a blank canvas or pass an existing `.txt` file to load into the first frame:
+
+```sh
 ./4scii
-Press any key to change brush
-Ctrl-s save 4scii.txt and quit
-Ctrl-q just quit
+./4scii artwork.txt
+```
+
+### Mouse Controls
+
+| Action | Description |
+| :--- | :--- |
+| **Left-Click / Drag (Canvas)** | Paint with the current brush and colors (or erase in Erase mode) |
+| **Middle-Click (Canvas)** | Toggle between `Draw` and `Erase` modes |
+| **Right-Click (Canvas)** | Open the interactive `4scii` Control & Color Menu |
+| **Left-Click (Bottom Toolbar)** | Trigger toolbar buttons (`[Menu]`, `[B:*]`, `[Draw]`, `[<]`, `[>]`, `[+F]`, `[Cp]`, `[-F]`, `[Play]`, `[Save]`, `[Cast]`) |
+
+### Keyboard Shortcuts (Canvas)
+
+| Key | Action |
+| :--- | :--- |
+| **Any Printable Key** | Set active brush character (`*`, `#`, `@`, letters, symbols, etc.) |
+| **Left / Right Arrows** | Cycle Foreground (FG) color |
+| **Up / Down Arrows** | Cycle Background (BG) color |
+| **Page Up / Page Down** | Step to Previous / Next animation frame |
+| **F2 / Tab / Ctrl+G** | Open the interactive Control & Color Menu |
+| **Ctrl+N** | Insert a new blank frame after the current frame |
+| **Ctrl+D** | Duplicate/clone the current frame into a new frame |
+| **Delete / Ctrl+X** | Delete the current frame (or clear if it is the only frame) |
+| **Ctrl+K** | Clear the current frame |
+| **Ctrl+Z** | Undo stroke/edit on the current frame |
+| **Ctrl+Y** | Redo stroke/edit on the current frame |
+| **Ctrl+P** | Play / preview animation loop in the terminal (press any key or click to stop) |
+| **Ctrl+S** | Prompt for filename and save current frame as static `.txt` |
+| **Ctrl+O / Ctrl+L** | Prompt for filename and load static `.txt` into current frame |
+| **Ctrl+E** | Prompt for filename and export full animation as asciinema `.cast` |
+| **Ctrl+Q** | Quit `4scii` |
+
+### Menu Controls (`F2` / `Tab` / `Right-Click`)
+
+Inside the popup menu, you can click any control with the mouse or use single-key shortcuts:
+* **`1`–`8` or `Left` / `Right`:** Select or cycle Foreground color
+* **`F` / `G` or `Down` / `Up`:** Cycle Background color
+* **`B`:** Toggle Bold attribute
+* **`M`:** Toggle `Draw` / `Erase` mode
+* **`C`:** Type a custom brush character
+* **`,` / `.` or `Page Up` / `Page Down`:** Previous / Next frame
+* **`N` / `D` / `X` (or `Del`):** New blank frame / Duplicate frame / Delete frame
+* **`-` / `+`:** Decrease / Increase frame duration (`+/- 20ms`)
+* **`O`:** Toggle Onion-Skinning (dims previous frame in blue behind current frame)
+* **`P`:** Play animation
+* **`Z` / `Y` / `K`:** Undo / Redo / Clear current frame
+* **`S` / `L` / `E`:** Save `.txt` / Load `.txt` / Export `.cast`
+* **`ESC` / `F2` / `Q` / `Enter`:** Close menu and return to canvas
+
+## Playing Exported Animations
+
+Animations exported via `Ctrl+E` (or `[Cast]`) use the standard **asciinema v2** format and can be replayed with the `asciinema` CLI or embedded in web pages using the asciinema player:
+
+```sh
+asciinema play 4scii.cast
 ```

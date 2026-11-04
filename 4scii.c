@@ -1,99 +1,234 @@
-/* Tested on OpenBSD and Linux
- *
- * To compile on OpenBSD:
- * cc -O2 -pipe -c 4scii.c
- * cc -o 4scii 4scii.o -lcurses
- *
- * To compile on Linux:
- * gcc -O2 -pipe -c 4scii.c
- * gcc -o 4scii 4scii.o -lncurses
- */
+#include "4scii.h"
 
-#include <sys/types.h>
-#include <curses.h>
-#include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <termios.h>
-#include <unistd.h>
-#include <string.h>
+static const char *fg_bg_names[8] = {
+    "Black", "Red", "Green", "Yellow",
+    "Blue", "Magenta", "Cyan", "White"
+};
 
-int main (int argc, char *argv[]) {
-  int input, x, y;
-  char character = '*';
-  struct termios term;
-  putenv("TERM=xterm-1002");
-  initscr();
-  raw();
-  nodelay(stdscr,1);
-  noecho();
-  curs_set(0);
-  nonl();
-  keypad(stdscr,1);
-  MEVENT mouseinput;
-  mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
-  int ymax = 0, xmax = 0, ymin, xmin;
-  getmaxyx(stdscr, ymin, xmin);
-  int canvasHeight = ymin + 1;
-  int canvasWidth = xmin + 2;
-  char canvas[canvasWidth][canvasHeight];
-  for(y = 0; y < canvasHeight; y++) {
-    for(x = 0; x < canvasWidth; x++) {
-      canvas[y][x] = '\0';
+static void apply_brush_at(Editor *ed, int y, int x) {
+    if (ed == NULL || y < 0 || y >= ed->canvas_rows || x < 0 || x >= ed->canvas_cols) {
+        return;
     }
-  }
-
-  do {
-    input = wgetch(stdscr);
-    if(input == KEY_MOUSE) {
-      getmouse(&mouseinput);
-      y = mouseinput.y;
-      x = mouseinput.x;
-      canvas[y][x] = character;
-      mvaddch(y, x, character);
-      if(y > ymax) {
-        ymax = y;
-      }
-      if(y < ymin) {
-        ymin = y;
-      }
-      if(x > xmax) {
-        xmax = x;
-      }
-      if(x < xmin) {
-        xmin = x;
-      }
-      refresh();
-    } else if(isprint(input)) {
-      character = input;
-    } else if(input == CTRL('Z')) {
-    } else if(input == CTRL('Y')) {
-    } else if(input == CTRL('S')) {
-      endwin();
-      character = '\0';
-      char canvasout[1 + ymax - ymin][2 + xmax - xmin];
-      for (y = 0; y < 1 + ymax - ymin; y++) {
-        for (x = 0; x < 2 + xmax - xmin; x++) {
-          canvasout[y][x] = character;
-        }
-      }
-      FILE *ofp;
-      ofp = fopen("4scii.txt", "w");
-      for(y = ymin; y <= ymax; y++) {
-        for(x = xmax; x >= xmin; x--) {
-          if(isprint(canvas[y][x])) {
-            character = ' ';
-            canvasout[y - ymin][x - xmin] = canvas[y][x];
-          } else {
-            canvasout[y - ymin][x - xmin] = character;
-          }
-        }
-        fprintf(ofp, "%s\n", canvasout[y - ymin]);
-        character = '\0';
-      }
-      fclose(ofp);
-      exit(0);
+    ed->cursor_y = y;
+    ed->cursor_x = x;
+    if (ed->draw_mode == MODE_ERASE) {
+        canvas_erase_cell(ed, y, x);
+    } else {
+        canvas_put_cell(ed, y, x);
     }
-  } while(input != CTRL('Q'));
-  endwin();
+}
+
+int main(int argc, char *argv[]) {
+    static char term_env[] = "TERM=xterm-1002";
+    putenv(term_env);
+
+    initscr();
+    raw();
+    noecho();
+    curs_set(0);
+    nonl();
+    keypad(stdscr, TRUE);
+    timeout(-1);
+
+    ui_init_colors();
+
+    mouseinterval(0);
+    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
+    printf("\033[?1002h");
+    fflush(stdout);
+
+    int term_rows = 0, term_cols = 0;
+    getmaxyx(stdscr, term_rows, term_cols);
+
+    Editor ed;
+    editor_init(&ed, term_rows, term_cols);
+
+    if (argc > 1 && argv[1] != NULL && argv[1][0] != '\0') {
+        fileio_load_txt(&ed, argv[1]);
+    }
+
+    ui_render(&ed);
+
+    while (ed.running) {
+        int input = wgetch(stdscr);
+        if (input == ERR) {
+            continue;
+        }
+
+        if (input == CTRL('Q')) {
+            ed.running = false;
+            break;
+        } else if (input == KEY_F(2) || input == CTRL('G') || input == '\t') {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            ui_open_menu(&ed);
+        } else if (input == CTRL('S')) {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            fileio_prompt_save_txt(&ed);
+        } else if (input == CTRL('O') || input == CTRL('L')) {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            fileio_prompt_load_txt(&ed);
+        } else if (input == CTRL('E')) {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            fileio_prompt_export_cast(&ed);
+        } else if (input == CTRL('P')) {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            ui_play_animation(&ed);
+        } else if (input == CTRL('Z')) {
+            if (canvas_undo(&ed)) {
+                ui_set_status(&ed, "Undo (depth: %d)", ed.current_frame->undo_depth);
+            } else {
+                ui_set_status(&ed, "Nothing to undo.");
+            }
+            ui_render(&ed);
+        } else if (input == CTRL('Y')) {
+            if (canvas_redo(&ed)) {
+                ui_set_status(&ed, "Redo (depth: %d)", ed.current_frame->redo_depth);
+            } else {
+                ui_set_status(&ed, "Nothing to redo.");
+            }
+            ui_render(&ed);
+        } else if (input == CTRL('N')) {
+            frame_new_after(&ed, false);
+            ui_set_status(&ed, "Added blank frame (%d/%d)", ed.frame_index + 1, ed.frame_count);
+            ui_render(&ed);
+        } else if (input == CTRL('D')) {
+            frame_new_after(&ed, true);
+            ui_set_status(&ed, "Duplicated frame (%d/%d)", ed.frame_index + 1, ed.frame_count);
+            ui_render(&ed);
+        } else if (input == CTRL('X') || input == KEY_DC) {
+            frame_delete_current(&ed);
+            ui_set_status(&ed, "Deleted frame (now %d/%d)", ed.frame_index + 1, ed.frame_count);
+            ui_render(&ed);
+        } else if (input == CTRL('K')) {
+            canvas_push_undo(&ed);
+            frame_clear(&ed, ed.current_frame);
+            ui_set_status(&ed, "Cleared frame %d/%d", ed.frame_index + 1, ed.frame_count);
+            ui_render(&ed);
+        } else if (input == KEY_LEFT) {
+            ed.fg = (short)((ed.fg + 7) % 8);
+            ui_set_status(&ed, "FG Color: %s | BG Color: %s",
+                          fg_bg_names[ed.fg], fg_bg_names[ed.bg]);
+            ui_render_status(&ed);
+            refresh();
+        } else if (input == KEY_RIGHT) {
+            ed.fg = (short)((ed.fg + 1) % 8);
+            ui_set_status(&ed, "FG Color: %s | BG Color: %s",
+                          fg_bg_names[ed.fg], fg_bg_names[ed.bg]);
+            ui_render_status(&ed);
+            refresh();
+        } else if (input == KEY_UP) {
+            ed.bg = (short)((ed.bg + 1) % 8);
+            ui_set_status(&ed, "FG Color: %s | BG Color: %s",
+                          fg_bg_names[ed.fg], fg_bg_names[ed.bg]);
+            ui_render_status(&ed);
+            refresh();
+        } else if (input == KEY_DOWN) {
+            ed.bg = (short)((ed.bg + 7) % 8);
+            ui_set_status(&ed, "FG Color: %s | BG Color: %s",
+                          fg_bg_names[ed.fg], fg_bg_names[ed.bg]);
+            ui_render_status(&ed);
+            refresh();
+        } else if (input == KEY_PPAGE) {
+            frame_prev(&ed);
+            ui_set_status(&ed, "Frame %d/%d (%dms)",
+                          ed.frame_index + 1, ed.frame_count, ed.current_frame->delay_ms);
+            ui_render(&ed);
+        } else if (input == KEY_NPAGE) {
+            frame_next(&ed);
+            ui_set_status(&ed, "Frame %d/%d (%dms)",
+                          ed.frame_index + 1, ed.frame_count, ed.current_frame->delay_ms);
+            ui_render(&ed);
+        } else if (input == KEY_MOUSE) {
+            MEVENT mev;
+            if (getmouse(&mev) != OK) {
+                continue;
+            }
+
+            int my = mev.y;
+            int mx = mev.x;
+
+            /* Click on the bottom status/toolbar line */
+            if (my == ed.term_rows - 1) {
+                if (mev.bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED)) {
+                    ed.mouse_down = false;
+                    ed.stroke_active = false;
+                    ui_handle_status_click(&ed, mx);
+                }
+                continue;
+            }
+
+            /* Right-click opens the interactive ncurses menu */
+            if (mev.bstate & (BUTTON3_PRESSED | BUTTON3_CLICKED)) {
+                ed.mouse_down = false;
+                ed.stroke_active = false;
+                ui_open_menu(&ed);
+                continue;
+            }
+
+            /* Middle-click toggles Draw/Erase mode */
+            if (mev.bstate & (BUTTON2_PRESSED | BUTTON2_CLICKED)) {
+                ed.draw_mode = (ed.draw_mode == MODE_DRAG) ? MODE_ERASE : MODE_DRAG;
+                ed.stroke_active = false;
+                ui_set_status(&ed, "Draw mode: %s",
+                              ed.draw_mode == MODE_DRAG ? "Draw" : "Erase");
+                ui_render_status(&ed);
+                refresh();
+                continue;
+            }
+
+            /* Canvas area mouse handling */
+            if (my >= 0 && my < ed.canvas_rows && mx >= 0 && mx < ed.canvas_cols) {
+                if (mev.bstate & BUTTON1_PRESSED) {
+                    ed.mouse_down = true;
+                    if (!ed.stroke_active) {
+                        canvas_push_undo(&ed);
+                        ed.stroke_active = true;
+                    }
+                    apply_brush_at(&ed, my, mx);
+                    ui_set_status(&ed, "Pos:(%d,%d) Brush:'%c' Frame:%d/%d",
+                                  mx, my, ed.brush, ed.frame_index + 1, ed.frame_count);
+                    ui_render(&ed);
+                } else if (mev.bstate & BUTTON1_RELEASED) {
+                    ed.mouse_down = false;
+                    ed.stroke_active = false;
+                } else if (mev.bstate & BUTTON1_CLICKED) {
+                    canvas_push_undo(&ed);
+                    apply_brush_at(&ed, my, mx);
+                    ed.mouse_down = false;
+                    ed.stroke_active = false;
+                    ui_set_status(&ed, "Pos:(%d,%d) Brush:'%c' Frame:%d/%d",
+                                  mx, my, ed.brush, ed.frame_index + 1, ed.frame_count);
+                    ui_render(&ed);
+                } else if (ed.mouse_down) {
+                    if (!ed.stroke_active) {
+                        canvas_push_undo(&ed);
+                        ed.stroke_active = true;
+                    }
+                    apply_brush_at(&ed, my, mx);
+                    ui_set_status(&ed, "Pos:(%d,%d) Brush:'%c' Frame:%d/%d",
+                                  mx, my, ed.brush, ed.frame_index + 1, ed.frame_count);
+                    ui_render(&ed);
+                }
+            }
+        } else if (isprint(input)) {
+            ed.brush = (char)input;
+            if (ed.draw_mode == MODE_ERASE) {
+                ed.draw_mode = MODE_DRAG;
+            }
+            ui_set_status(&ed, "Selected brush character: '%c'", ed.brush);
+            ui_render_status(&ed);
+            refresh();
+        }
+    }
+
+    printf("\033[?1002l");
+    fflush(stdout);
+    endwin();
+    editor_free(&ed);
+    return 0;
 }

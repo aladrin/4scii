@@ -1,0 +1,21 @@
+# Compiled binary and object files
+/4scii
+*.o
+
+# Generated build configuration
+/config.mk
+
+# Exported animations and static ASCII art (keep LICENSE.txt tracked)
+*.cast
+*.txt
+!LICENSE.txt
+
+# Core dumps and editor swap/backup files
+core
+*.core
+*~
+.*.swp
+.*.swo
+
+# Legacy RCS directory
+RCS/

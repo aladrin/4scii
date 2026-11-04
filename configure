@@ -1,0 +1,158 @@
+#!/bin/sh
+# 4scii dependency checker and build configuration script
+
+set -e
+
+CFLAGS="${CFLAGS:--O2 -pipe -Wall -Wextra}"
+CPPFLAGS="${CPPFLAGS:-}"
+LDLIBS="${LDLIBS:-}"
+
+printf "Checking operating system... "
+UNAME_S=$(uname -s 2>/dev/null || echo "Unknown")
+printf "%s\n" "$UNAME_S"
+
+printf "Checking for C compiler... "
+if [ -n "$CC" ] && command -v "$CC" >/dev/null 2>&1; then
+    COMPILER="$CC"
+elif command -v cc >/dev/null 2>&1; then
+    COMPILER="cc"
+elif command -v gcc >/dev/null 2>&1; then
+    COMPILER="gcc"
+elif command -v clang >/dev/null 2>&1; then
+    COMPILER="clang"
+else
+    printf "not found\n"
+    echo "Error: No C compiler (cc, gcc, or clang) found in PATH." >&2
+    exit 1
+fi
+printf "%s\n" "$COMPILER"
+
+printf "Checking for make... "
+if command -v make >/dev/null 2>&1; then
+    printf "make\n"
+elif command -v gmake >/dev/null 2>&1; then
+    printf "gmake\n"
+else
+    printf "not found\n"
+    echo "Error: make utility not found in PATH." >&2
+    exit 1
+fi
+
+TMPDIR="${TMPDIR:-/tmp}"
+TEST_C="$TMPDIR/4scii_conf_$$.c"
+TEST_BIN="$TMPDIR/4scii_conf_$$"
+
+cleanup() {
+    rm -f "$TEST_C" "$TEST_BIN"
+}
+trap cleanup EXIT INT TERM
+
+printf "Checking standard C and POSIX headers... "
+cat << 'EOF' > "$TEST_C"
+#include <sys/types.h>
+#include <ctype.h>
+#include <err.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <time.h>
+#include <unistd.h>
+int main(void) { return 0; }
+EOF
+
+if "$COMPILER" $CPPFLAGS "$TEST_C" -o "$TEST_BIN" >/dev/null 2>&1; then
+    printf "ok\n"
+else
+    printf "failed\n"
+    echo "Error: Standard C / POSIX development headers (libc-dev) are missing." >&2
+    exit 1
+fi
+
+printf "Checking for curses/ncurses header and library... "
+cat << 'EOF' > "$TEST_C"
+#if defined(HAVE_NCURSESW_CURSES_H)
+#include <ncursesw/curses.h>
+#elif defined(HAVE_NCURSES_CURSES_H)
+#include <ncurses/curses.h>
+#elif defined(HAVE_NCURSES_H)
+#include <ncurses.h>
+#else
+#include <curses.h>
+#endif
+
+int main(void) {
+    MEVENT ev;
+    initscr();
+    start_color();
+    getmouse(&ev);
+    endwin();
+    return 0;
+}
+EOF
+
+FOUND_CURSES=0
+DETECTED_CPPFLAGS=""
+DETECTED_LDLIBS=""
+
+# 1. Try pkg-config first if available
+if command -v pkg-config >/dev/null 2>&1; then
+    for pkg in ncursesw ncurses curses; do
+        if pkg-config --exists "$pkg" 2>/dev/null; then
+            PKG_CFLAGS=$(pkg-config --cflags "$pkg" 2>/dev/null || true)
+            PKG_LIBS=$(pkg-config --libs "$pkg" 2>/dev/null || true)
+            for hdr_def in "-DHAVE_CURSES_H" "-DHAVE_NCURSES_H" "-DHAVE_NCURSESW_CURSES_H" "-DHAVE_NCURSES_CURSES_H"; do
+                if "$COMPILER" $CPPFLAGS $PKG_CFLAGS "$hdr_def" "$TEST_C" -o "$TEST_BIN" $LDLIBS $PKG_LIBS >/dev/null 2>&1; then
+                    FOUND_CURSES=1
+                    DETECTED_CPPFLAGS="$PKG_CFLAGS $hdr_def"
+                    DETECTED_LDLIBS="$PKG_LIBS"
+                    break 2
+                fi
+            done
+        fi
+    done
+fi
+
+# 2. Fallback to direct compiler/linker probing
+if [ "$FOUND_CURSES" -eq 0 ]; then
+    for hdr_def in "-DHAVE_CURSES_H" "-DHAVE_NCURSES_H" "-DHAVE_NCURSESW_CURSES_H" "-DHAVE_NCURSES_CURSES_H"; do
+        for lib in "-lncursesw" "-lncurses" "-lcurses"; do
+            if "$COMPILER" $CPPFLAGS "$hdr_def" "$TEST_C" -o "$TEST_BIN" $LDLIBS "$lib" >/dev/null 2>&1; then
+                FOUND_CURSES=1
+                DETECTED_CPPFLAGS="$hdr_def"
+                DETECTED_LDLIBS="$lib"
+                break 2
+            fi
+        done
+    done
+fi
+
+if [ "$FOUND_CURSES" -eq 0 ]; then
+    printf "not found!\n\n"
+    echo "ERROR: curses/ncurses development headers and libraries were not found." >&2
+    echo "Please install the ncurses development package for your system:" >&2
+    echo "  Debian / Ubuntu : sudo apt-get install libncurses-dev" >&2
+    echo "  Rocky / RHEL    : sudo dnf install ncurses-devel" >&2
+    echo "  Alpine Linux    : sudo apk add ncurses-dev" >&2
+    echo "  Arch Linux      : sudo pacman -S ncurses" >&2
+    echo "  OpenBSD         :Ensure the 'comp' base file set is installed" >&2
+    exit 1
+fi
+
+printf "yes (%s %s)\n" "$DETECTED_CPPFLAGS" "$DETECTED_LDLIBS"
+
+FINAL_CPPFLAGS=$(printf "%s %s" "$CPPFLAGS" "$DETECTED_CPPFLAGS" | sed 's/^ *//;s/ *$//')
+FINAL_LDLIBS=$(printf "%s %s" "$LDLIBS" "$DETECTED_LDLIBS" | sed 's/^ *//;s/ *$//')
+
+cat << EOF > config.mk
+# Generated automatically by ./configure
+CC = $COMPILER
+CFLAGS = $CFLAGS
+CPPFLAGS = $FINAL_CPPFLAGS
+LDLIBS = $FINAL_LDLIBS
+EOF
+
+echo "Configuration successful. Wrote config.mk."
+echo "Run 'make' (or 'gmake') to build 4scii."
