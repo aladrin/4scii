@@ -87,11 +87,12 @@ void editor_init(Editor *ed, int term_rows, int term_cols) {
     ed->stroke_active = false;
     ed->onion_skin = false;
     ed->running = true;
+    ed->txt_file_set = false;
 
     snprintf(ed->current_txt_file, sizeof(ed->current_txt_file), "4scii.txt");
     snprintf(ed->current_cast_file, sizeof(ed->current_cast_file), "4scii.cast");
     snprintf(ed->status_msg, sizeof(ed->status_msg),
-             "F2/Ctrl+G:Menu | Ctrl+S:Save .txt | Ctrl+O:Load .txt | Ctrl+E:Export .cast | Ctrl+P:Play | Ctrl+Q:Quit");
+             "F2:Menu | Ctrl+S:Save | Ctrl+A:SaveAs | Ctrl+O:Load | Ctrl+E:Cast | Ctrl+P:Play | Ctrl+Q:Quit");
 
     ed->first_frame = frame_create(ed->canvas_rows, ed->canvas_cols, DEFAULT_FRAME_DELAY_MS);
     ed->current_frame = ed->first_frame;

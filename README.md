@@ -1,20 +1,20 @@
 ![4scii](file.png)
 # 4scii - Terminal ASCII Art & Frame-by-Frame Animator
 
-`4scii` is a mouse-driven terminal ASCII art paint program and frame-by-frame animation editor built with `curses`/`ncurses` in C. It supports full 8x8 ANSI color pairs, bold attributes, per-frame Undo/Redo stacks, onion-skinning, static `.txt` file load/save, and direct export to **asciinema v2 (`.cast`)** animation files.
+`4scii` is a mouse-driven terminal ASCII art paint program and frame-by-frame animation editor built with `curses`/`ncurses` in C. It supports full 8x8 ANSI color pairs, bold attributes, per-frame Undo/Redo stacks, onion-skinning, ANSI-colored static `.txt` file load/save, and full **asciinema v2 (`.cast`)** animation import and export.
 
 ## Features
 
 * **Mouse-Driven Painting & Erasing:** Click and drag to paint characters with active foreground/background colors, or toggle erase mode.
 * **Interactive Control & Color Menu:** Popup `ncurses` menu accessible via mouse or keyboard to select colors, brush presets, frame timing, onion-skinning, and file operations.
 * **Frame-by-Frame Animator:** Create blank frames, duplicate existing frames for incremental animation, delete frames, adjust per-frame millisecond delays, toggle dim blue onion-skinning of the previous frame, and preview live animation playback in the terminal.
-* **Static `.txt` I/O:** Load and save cropped static ASCII art files (automatically enforcing the `.txt` extension).
-* **Asciinema `.cast` v2 Export:** Serialize multi-frame color animations with exact frame timings to `.cast` files playable via `asciinema play`.
+* **Colored `.txt` I/O (Save & Save As):** Save and load cropped static ASCII art files with full ANSI SGR color and bold preservation (compatible with `cat`, `less -R`, and plain uncolored `.txt` files). Supports quick `Save` to the active file as well as `Save As`.
+* **Asciinema `.cast` v2 Import & Export:** Load and edit existing `.cast` animations or export multi-frame color animations with exact frame timings playable via `asciinema play`.
 
 ## Grab the Source
 
 ```sh
-git clone https://github.com/aladrin/4scii.git
+git clone [https://github.com/aladrin/4scii.git](https://github.com/aladrin/4scii.git)
 cd 4scii
 ```
 
@@ -54,11 +54,12 @@ make distclean  # Remove binary, object files, and config.mk
 
 ## Usage
 
-Start with a blank canvas or pass an existing `.txt` file to load into the first frame:
+Start with a blank canvas, or pass an existing `.txt` static file or `.cast` animation file to load on startup:
 
 ```sh
 ./4scii
 ./4scii artwork.txt
+./4scii animation.cast
 ```
 
 ### Mouse Controls
@@ -68,7 +69,7 @@ Start with a blank canvas or pass an existing `.txt` file to load into the first
 | **Left-Click / Drag (Canvas)** | Paint with the current brush and colors (or erase in Erase mode) |
 | **Middle-Click (Canvas)** | Toggle between `Draw` and `Erase` modes |
 | **Right-Click (Canvas)** | Open the interactive `4scii` Control & Color Menu |
-| **Left-Click (Bottom Toolbar)** | Trigger toolbar buttons (`[Menu]`, `[B:*]`, `[Draw]`, `[<]`, `[>]`, `[+F]`, `[Cp]`, `[-F]`, `[Play]`, `[Save]`, `[Cast]`) |
+| **Left-Click (Bottom Toolbar)** | Trigger toolbar buttons (`[Menu]`, `[B:*]`, `[Draw]`, `[<]`, `[>]`, `[+F]`, `[Cp]`, `[-F]`, `[Play]`, `[Save]`, `[SvAs]`, `[Cast]`) |
 
 ### Keyboard Shortcuts (Canvas)
 
@@ -86,8 +87,10 @@ Start with a blank canvas or pass an existing `.txt` file to load into the first
 | **Ctrl+Z** | Undo stroke/edit on the current frame |
 | **Ctrl+Y** | Redo stroke/edit on the current frame |
 | **Ctrl+P** | Play / preview animation loop in the terminal (press any key or click to stop) |
-| **Ctrl+S** | Prompt for filename and save current frame as static `.txt` |
-| **Ctrl+O / Ctrl+L** | Prompt for filename and load static `.txt` into current frame |
+| **Ctrl+S** | Quick save current frame to active `.txt` file (prompts on first save) |
+| **Ctrl+A** | Save As — prompt for a new `.txt` or `.cast` filename |
+| **Ctrl+O / Ctrl+L** | Prompt for filename and load `.txt` or `.cast` file (auto-detected by extension) |
+| **Ctrl+R** | Prompt for filename and load an asciinema `.cast` animation |
 | **Ctrl+E** | Prompt for filename and export full animation as asciinema `.cast` |
 | **Ctrl+Q** | Quit `4scii` |
 
@@ -105,13 +108,21 @@ Inside the popup menu, you can click any control with the mouse or use single-ke
 * **`O`:** Toggle Onion-Skinning (dims previous frame in blue behind current frame)
 * **`P`:** Play animation
 * **`Z` / `Y` / `K`:** Undo / Redo / Clear current frame
-* **`S` / `L` / `E`:** Save `.txt` / Load `.txt` / Export `.cast`
+* **`S` / `A`:** Quick Save `.txt` / Save As (`.txt` or `.cast`)
+* **`L` / `I` / `E`:** Load (`.txt` or `.cast`) / Load `.cast` / Export `.cast`
 * **`ESC` / `F2` / `Q` / `Enter`:** Close menu and return to canvas
 
-## Playing Exported Animations
+## Viewing Saved Files
 
-Animations exported via `Ctrl+E` (or `[Cast]`) use the standard **asciinema v2** format and can be replayed with the `asciinema` CLI or embedded in web pages using the asciinema player:
+Static colored ASCII art files saved as `.txt` include ANSI SGR color sequences and can be displayed directly in the terminal:
+
+```sh
+cat 4scii.txt
+```
+
+Animations exported as `.cast` use the **asciinema v2** format and can be replayed with the `asciinema` CLI or reopened in `4scii`:
 
 ```sh
 asciinema play 4scii.cast
+./4scii 4scii.cast
 ```

@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     editor_init(&ed, term_rows, term_cols);
 
     if (argc > 1 && argv[1] != NULL && argv[1][0] != '\0') {
-        fileio_load_txt(&ed, argv[1]);
+        fileio_load_auto(&ed, argv[1]);
     }
 
     ui_render(&ed);
@@ -65,11 +65,19 @@ int main(int argc, char *argv[]) {
         } else if (input == CTRL('S')) {
             ed.mouse_down = false;
             ed.stroke_active = false;
-            fileio_prompt_save_txt(&ed);
+            fileio_save_txt_quick(&ed);
+        } else if (input == CTRL('A')) {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            fileio_prompt_save_as(&ed);
         } else if (input == CTRL('O') || input == CTRL('L')) {
             ed.mouse_down = false;
             ed.stroke_active = false;
             fileio_prompt_load_txt(&ed);
+        } else if (input == CTRL('R')) {
+            ed.mouse_down = false;
+            ed.stroke_active = false;
+            fileio_prompt_load_cast(&ed);
         } else if (input == CTRL('E')) {
             ed.mouse_down = false;
             ed.stroke_active = false;

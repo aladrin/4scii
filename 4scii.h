@@ -2,7 +2,9 @@
 #define FOURSCII_H
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <ctype.h>
+#include <dirent.h>
 #if defined(HAVE_NCURSESW_CURSES_H)
 #include <ncursesw/curses.h>
 #elif defined(HAVE_NCURSES_CURSES_H)
@@ -77,6 +79,7 @@ typedef struct Editor {
     bool stroke_active;
     bool onion_skin;
     bool running;
+    bool txt_file_set;
     char current_txt_file[MAX_FILENAME];
     char current_cast_file[MAX_FILENAME];
     char status_msg[STATUS_LEN];
@@ -117,11 +120,17 @@ void ui_play_animation(Editor *ed);
 
 /* fileio.c */
 void fileio_ensure_ext(char *filename, size_t max_len, const char *ext);
+bool fileio_has_ext(const char *filename, const char *ext);
 bool fileio_save_txt(Editor *ed, const char *raw_filename);
 bool fileio_load_txt(Editor *ed, const char *raw_filename);
 bool fileio_export_cast(Editor *ed, const char *raw_filename);
+bool fileio_load_cast(Editor *ed, const char *raw_filename);
+bool fileio_load_auto(Editor *ed, const char *raw_filename);
+void fileio_save_txt_quick(Editor *ed);
 void fileio_prompt_save_txt(Editor *ed);
+void fileio_prompt_save_as(Editor *ed);
 void fileio_prompt_load_txt(Editor *ed);
 void fileio_prompt_export_cast(Editor *ed);
+void fileio_prompt_load_cast(Editor *ed);
 
 #endif /* FOURSCII_H */
