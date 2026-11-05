@@ -5,12 +5,12 @@
 
 ## Features
 
-* **Mouse-Driven Painting & Erasing:** Click and drag to paint characters with active foreground/background colors, or toggle erase mode.
-* **Interactive Control & Color Menu:** Popup `ncurses` menu accessible via mouse or keyboard to select colors, brush presets, frame timing, onion-skinning, and file operations.
-* **Frame-by-Frame Animator:** Create blank frames, duplicate existing frames for incremental animation, delete frames, adjust per-frame millisecond delays, toggle dim blue onion-skinning of the previous frame, and preview live animation playback in the terminal.
-* **Colored `.txt` I/O (Save & Save As):** Save and load cropped static ASCII art files with full ANSI SGR color and bold preservation (compatible with `cat`, `less -R`, and plain uncolored `.txt` files). Supports quick `Save` to the active file as well as `Save As`.
-* **Asciinema `.cast` v2 Import & Export:** Load and edit existing `.cast` animations or export multi-frame color animations with exact frame timings playable via `asciinema play`.
-* **Readline-Style Filename Prompts:** In-place cursor editing, kill/yank ring, session history, and filesystem `Tab` completion for all file prompts.
+- **Mouse-Driven Painting & Erasing:** Click and drag to paint characters with active foreground/background colors, or toggle erase mode.
+- **Interactive Control & Color Menu:** Popup `ncurses` menu accessible via mouse or keyboard to select colors, brush presets, frame timing, onion-skinning, and file operations.
+- **Frame-by-Frame Animator:** Create blank frames, duplicate existing frames for incremental animation, delete frames, adjust per-frame millisecond delays, toggle dim blue onion-skinning of the previous frame, and preview live animation playback in the terminal.
+- **Colored `.txt` I/O (Save & Save As):** Save and load cropped static ASCII art files with full ANSI SGR color and bold preservation (compatible with `cat`, `less -R`, and plain uncolored `.txt` files). Supports quick `Save` to the active file as well as `Save As`.
+- **Asciinema `.cast` v2 Import & Export:** Load and edit existing `.cast` animations or export multi-frame color animations with exact frame timings playable via `asciinema play`.
+- **Readline-Style Filename Prompts:** In-place cursor editing, kill/yank ring, session history, and filesystem `Tab` completion for all file prompts.
 
 ## Grab the Source
 
@@ -24,25 +24,25 @@ cd 4scii
 
 ### Prerequisites
 
-* **Debian / Ubuntu:**
+- **Debian / Ubuntu:**
   ```sh
   sudo apt-get install build-essential libncurses-dev
   ```
-* **Rocky Linux / RHEL / Fedora:**
+- **Rocky Linux / RHEL / Fedora:**
   ```sh
   sudo dnf install gcc make ncurses-devel
   ```
-* **OpenBSD:**
-  Ensure the base `comp` set is installed (`curses` is in base) and install GNU Make if using `gmake`:
+- **OpenBSD:**
+  Ensure the base `comp` set is installed (`curses` is in base) and install GNU Make (`gmake` is required to build):
   ```sh
   doas pkg_add gmake
   ```
-* **macOS:**
+- **macOS:**
   Install the Xcode Command Line Tools (provides `clang`, `make`, and system `ncurses` headers and libraries):
   ```sh
   xcode-select --install
   ```
-* **Windows (WSL / WSL2):**
+- **Windows (WSL / WSL2):**
   1. If WSL is not yet installed, open PowerShell or Command Prompt as Administrator and run:
      ```powershell
      wsl --install
@@ -55,18 +55,28 @@ cd 4scii
 
 ### Configure and Compile
 
-Run `./configure` to detect your compiler and `curses`/`ncurses` headers and libraries, then build with `make` (or `gmake` on OpenBSD):
+Run `./configure` to detect your compiler and `curses`/`ncurses` headers and libraries, then build with `make` (Linux / macOS / WSL) or `gmake` (OpenBSD):
 
 ```sh
 ./configure
+
+# Linux / macOS / WSL:
 make
+
+# OpenBSD:
+gmake
 ```
 
 To clean build artifacts:
 
 ```sh
+# Linux / macOS / WSL:
 make clean      # Remove binary and object files
 make distclean  # Remove binary, object files, and config.mk
+
+# OpenBSD:
+gmake clean
+gmake distclean
 ```
 
 ## Usage
@@ -133,20 +143,20 @@ When entering a filename for `Save`, `Save As`, `Load`, or `Export .cast`:
 ### Menu Controls (`F2` / `Tab` / `Right-Click`)
 
 Inside the popup menu, you can click any control with the mouse or use single-key shortcuts:
-* **`1`–`8` or `Left` / `Right`:** Select or cycle Foreground color
-* **`F` / `G` or `Down` / `Up`:** Cycle Background color
-* **`B`:** Toggle Bold attribute
-* **`M`:** Toggle `Draw` / `Erase` mode
-* **`C`:** Type a custom brush character
-* **`,` / `.` or `Page Up` / `Page Down`:** Previous / Next frame
-* **`N` / `D` / `X` (or `Del`):** New blank frame / Duplicate frame / Delete frame
-* **`-` / `+`:** Decrease / Increase frame duration (`+/- 20ms`)
-* **`O`:** Toggle Onion-Skinning (dims previous frame in blue behind current frame)
-* **`P`:** Play animation
-* **`Z` / `Y` / `K`:** Undo / Redo / Clear current frame
-* **`S` / `A`:** Quick Save `.txt` / Save As (`.txt` or `.cast`)
-* **`L` / `I` / `E`:** Load (`.txt` or `.cast`) / Load `.cast` / Export `.cast`
-* **`ESC` / `F2` / `Q` / `Enter`:** Close menu and return to canvas
+- **`1`–`8` or `Left` / `Right`:** Select or cycle Foreground color
+- **`F` / `G` or `Down` / `Up`:** Cycle Background color
+- **`B`:** Toggle Bold attribute
+- **`M`:** Toggle `Draw` / `Erase` mode
+- **`C`:** Type a custom brush character
+- **`,` / `.` or `Page Up` / `Page Down`:** Previous / Next frame
+- **`N` / `D` / `X` (or `Del`):** New blank frame / Duplicate frame / Delete frame
+- **`-` / `+`:** Decrease / Increase frame duration (`+/- 20ms`)
+- **`O`:** Toggle Onion-Skinning (dims previous frame in blue behind current frame)
+- **`P`:** Play animation
+- **`Z` / `Y` / `K`:** Undo / Redo / Clear current frame
+- **`S` / `A`:** Quick Save `.txt` / Save As (`.txt` or `.cast`)
+- **`L` / `I` / `E`:** Load (`.txt` or `.cast`) / Load `.cast` / Export `.cast`
+- **`ESC` / `F2` / `Q` / `Enter`:** Close menu and return to canvas
 
 ## Viewing Saved Files
 
