@@ -19,8 +19,10 @@ static void apply_brush_at(Editor *ed, int y, int x) {
 }
 
 int main(int argc, char *argv[]) {
-    static char term_env[] = "TERM=xterm-1002";
-    putenv(term_env);
+    const char *term = getenv("TERM");
+    if (term == NULL || term[0] == '\0') {
+        setenv("TERM", "xterm", 1);
+    }
 
     initscr();
     raw();
